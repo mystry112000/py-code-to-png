@@ -1,33 +1,50 @@
-# Py Code to PNG
+# StegoCode — Hide Python Code Inside PNG Images
 
-Convert your Python code into a beautiful, syntax-highlighted PNG image with an optional background image.
+A web tool that uses **steganography** to invisibly hide Python source code inside a PNG image file. The image looks completely normal, but the code is embedded after the PNG's `IEND` chunk — a classic polyglot technique.
 
-## Features
-
-- Syntax highlighting with multiple themes (Atom One Dark, GitHub Dark, Monokai, VS Code, Dracula, Nord)
-- Upload any image as background for your code screenshot
-- Adjustable font size and background opacity
-- Live preview
-- Downloads a ZIP containing the PNG image + the original `.py` file
-- Works entirely in your browser — no server needed
-
-## Live Demo
+## 🔗 Live Demo
 
 👉 **[Open the tool](https://mystry112000.github.io/py-code-to-png)**
 
-## Usage
+## How It Works
 
-1. Paste your Python code in the editor
-2. (Optional) Upload a background image
-3. Choose your style, font size, and opacity
-4. Click **Generate & Download ZIP**
+1. **Paste** your Python code
+2. **Upload** any PNG image (the carrier)
+3. Click **Embed Code & Download ZIP**
+4. The code is appended after the PNG's IEND marker — invisible to image viewers
+5. Download a ZIP containing:
+   - `stego.png` — the carrier image with code hidden inside (looks identical)
+   - `code.py` — the original source file
+   - `extract.py` — a script to retrieve the hidden code
 
-## Local Development
+## Extract the Hidden Code
 
-Just open `index.html` in any modern browser.
+```bash
+python extract.py stego.png
+```
+
+Or manually:
+```bash
+# Find ---PYCODE--- marker in the PNG and extract everything after it
+python -c "import sys; d=open('stego.png','rb').read(); i=d.find(b'---PYCODE---'); exec(d[i+len(b'---PYCODE---')+4:])"
+```
+
+## Technical Details
+
+This appends data after the PNG's `IEND` chunk. PNG specifications allow extra data after `IEND` — compliant decoders ignore it. The format is:
+
+```
+[original PNG bytes] ---PYCODE--- [4-byte code length] [Python source]
+```
+
+The image is **100% visually identical** to the original — zero pixel modification.
 
 ## Tech
 
-- [highlight.js](https://highlightjs.org/) — syntax highlighting
-- [JSZip](https://stuk.github.io/jszip/) — ZIP creation
-- [FileSaver.js](https://github.com/eligrey/FileSaver.js) — file download
+- Pure client-side JavaScript (no server)
+- [JSZip](https://stuk.github.io/jszip/) for ZIP creation
+- [FileSaver.js](https://github.com/eligrey/FileSaver.js) for download
+
+## Local
+
+Open `index.html` in any modern browser. No installation needed.
