@@ -1,6 +1,6 @@
-# StegoCode — Hide Python Code Inside PNG Images
+# StegoCode — Polyglot PNG + Python
 
-A web tool that uses **steganography** to invisibly hide Python source code inside a PNG image file. The image looks completely normal, but the code is embedded after the PNG's `IEND` chunk — a classic polyglot technique.
+Embed Python code inside a PNG image. Download a **self-executing `.py` file** — double-click it and your code runs while the image opens automatically.
 
 ## 🔗 Live Demo
 
@@ -9,42 +9,23 @@ A web tool that uses **steganography** to invisibly hide Python source code insi
 ## How It Works
 
 1. **Paste** your Python code
-2. **Upload** any PNG image (the carrier)
-3. Click **Embed Code & Download ZIP**
-4. The code is appended after the PNG's IEND marker — invisible to image viewers
-5. Download a ZIP containing:
-   - `stego.png` — the carrier image with code hidden inside (looks identical)
-   - `code.py` — the original source file
-   - `extract.py` — a script to retrieve the hidden code
+2. **Upload** any PNG image
+3. Click **Generate & Download .py**
+4. A `runnable.py` file downloads — it contains the PNG image (base64-encoded) + your code
+5. **Double-click `runnable.py`** → the image opens in your viewer AND your code executes
 
-## Extract the Hidden Code
+## What's Inside the .py
 
-```bash
-python extract.py stego.png
-```
-
-Or manually:
-```bash
-# Find ---PYCODE--- marker in the PNG and extract everything after it
-python -c "import sys; d=open('stego.png','rb').read(); i=d.find(b'---PYCODE---'); exec(d[i+len(b'---PYCODE---')+4:])"
-```
-
-## Technical Details
-
-This appends data after the PNG's `IEND` chunk. PNG specifications allow extra data after `IEND` — compliant decoders ignore it. The format is:
-
-```
-[original PNG bytes] ---PYCODE--- [4-byte code length] [Python source]
-```
-
-The image is **100% visually identical** to the original — zero pixel modification.
+The generated file:
+- Embeds the PNG image as a base64 string
+- On execution: writes the PNG to a temp file and opens it
+- Then runs your Python code via `exec()`
 
 ## Tech
 
 - Pure client-side JavaScript (no server)
-- [JSZip](https://stuk.github.io/jszip/) for ZIP creation
 - [FileSaver.js](https://github.com/eligrey/FileSaver.js) for download
 
 ## Local
 
-Open `index.html` in any modern browser. No installation needed.
+Open `index.html` in any browser. No installation needed.

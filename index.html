@@ -3,394 +3,237 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StegoCode - Hide Python in PNG</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<title>StegoCode — Polyglot PNG + Python</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #0a0a0f;
-  color: #e0e0e0;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 2rem;
-  overflow-x: hidden;
-  perspective: 1200px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0a0a0f; color: #e0e0e0;
+  min-height: 100vh; display: flex; justify-content: center;
+  padding: 2rem; overflow-x: hidden; perspective: 1200px;
 }
-
 body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background-image:
-    linear-gradient(rgba(88, 166, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(88, 166, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  z-index: 0;
-  pointer-events: none;
+    linear-gradient(rgba(88,166,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88,166,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px; z-index: 0; pointer-events: none;
 }
-
 body::after {
-  content: '';
-  position: fixed;
-  top: -30%;
-  left: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(88, 166, 255, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
+  content: ''; position: fixed; top: -30%; left: -10%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+  border-radius: 50%; z-index: 0; pointer-events: none;
   animation: orbFloat 20s ease-in-out infinite;
 }
-
 @keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(100px, 80px) scale(1.1); }
-  50% { transform: translate(50px, 160px) scale(0.9); }
-  75% { transform: translate(-50px, 80px) scale(1.05); }
+  0%,100%{transform:translate(0,0)scale(1)}
+  25%{transform:translate(100px,80px)scale(1.1)}
+  50%{transform:translate(50px,160px)scale(0.9)}
+  75%{transform:translate(-50px,80px)scale(1.05)}
 }
-
-.container { max-width: 1100px; width: 100%; position: relative; z-index: 1; transform-style: preserve-3d; }
-
-.header { text-align: center; margin-bottom: 2.5rem; transform: translateZ(40px); }
+.container { max-width: 1000px; width: 100%; position: relative; z-index: 1; }
+.header { text-align: center; margin-bottom: 2rem; }
 .header h1 {
-  font-size: 2.2rem; font-weight: 800;
-  background: linear-gradient(135deg, #58a6ff, #a371f7, #58a6ff);
+  font-size: 2rem; font-weight: 800;
+  background: linear-gradient(135deg,#58a6ff,#a371f7,#58a6ff);
   background-size: 200% 200%;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  animation: gradientShift 4s ease-in-out infinite;
+  animation: grad 4s ease-in-out infinite;
 }
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+@keyframes grad { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+.header p { color: #8b949e; font-size: 0.9rem; margin-top: 0.3rem; }
+.header .tag { color: #58a6ff; font-size: 0.75rem; opacity: 0.6; }
+.glow {
+  width: 60px; height: 3px; margin: 0.5rem auto 0;
+  background: linear-gradient(90deg,transparent,#58a6ff,#a371f7,transparent);
+  border-radius: 2px; animation: pulse 3s ease-in-out infinite;
 }
-.header .subtitle { color: #8b949e; font-size: 0.95rem; margin-top: 0.3rem; }
-.header .tagline { color: #58a6ff; font-size: 0.8rem; opacity: 0.7; margin-top: 0.2rem; }
-
-.glow-line {
-  width: 80px; height: 3px; margin: 0.5rem auto 0;
-  background: linear-gradient(90deg, transparent, #58a6ff, #a371f7, transparent);
-  border-radius: 2px;
-  animation: glowLinePulse 3s ease-in-out infinite;
-}
-@keyframes glowLinePulse {
-  0%, 100% { opacity: 0.5; width: 80px; }
-  50% { opacity: 1; width: 120px; }
-}
-
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; transform-style: preserve-3d; }
-@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+@keyframes pulse { 0%,100%{opacity:.5;width:60px} 50%{opacity:1;width:100px} }
 
 .card {
-  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
-  border: 1px solid rgba(48, 54, 61, 0.5);
-  border-radius: 16px;
-  padding: 1.25rem;
-  backdrop-filter: blur(20px);
-  transform: translateZ(20px) rotateX(2deg);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(145deg,rgba(22,27,34,0.9),rgba(13,17,23,0.95));
+  border: 1px solid rgba(48,54,61,0.5); border-radius: 16px; padding: 1.25rem;
+  backdrop-filter: blur(20px); transition: all .4s cubic-bezier(.175,.885,.32,1.275);
+  margin-bottom: 1.25rem;
 }
 .card-header {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;
 }
-.card-header h2 { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-.card-header .badge {
+.card-header h2 { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+.badge {
   font-size: 0.65rem; padding: 2px 8px; border-radius: 20px;
-  background: rgba(88, 166, 255, 0.1); color: #58a6ff;
-  border: 1px solid rgba(88, 166, 255, 0.2);
+  background: rgba(88,166,255,0.1); color: #58a6ff;
+  border: 1px solid rgba(88,166,255,0.2);
 }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width:700px) { .grid { grid-template-columns: 1fr; } }
 
 textarea {
-  width: 100%; height: 350px;
-  background: rgba(13, 17, 23, 0.8); color: #e0e0e0;
-  border: 1px solid rgba(48, 54, 61, 0.4); border-radius: 10px;
+  width: 100%; height: 320px; resize: vertical;
+  background: rgba(13,17,23,0.8); color: #e0e0e0;
+  border: 1px solid rgba(48,54,61,0.4); border-radius: 10px;
   padding: 1rem; font-family: 'Courier New', monospace; font-size: 13px;
-  resize: vertical; tab-size: 4; line-height: 1.6;
-  transition: all 0.3s;
+  tab-size: 4; line-height: 1.6; transition: all .3s;
 }
-textarea:focus {
-  outline: none;
-  border-color: rgba(88, 166, 255, 0.5);
-  box-shadow: 0 0 30px rgba(88, 166, 255, 0.05), inset 0 0 30px rgba(88, 166, 255, 0.02);
-}
+textarea:focus { outline: none; border-color: rgba(88,166,255,0.5); }
 
 .upload-area {
-  height: 350px;
-  border: 2px dashed rgba(48, 54, 61, 0.5); border-radius: 12px;
+  height: 320px;
+  border: 2px dashed rgba(48,54,61,0.5); border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.4s;
+  cursor: pointer; transition: all .4s;
   background-size: contain; background-repeat: no-repeat; background-position: center;
   position: relative; overflow: hidden;
 }
-.upload-area:hover { border-color: rgba(88, 166, 255, 0.4); transform: scale(1.01); }
-.upload-area.has-image { border-style: solid; border-color: rgba(88, 166, 255, 0.3); }
-
-.upload-area .placeholder { text-align: center; color: #8b949e; z-index: 1; }
-.upload-area .placeholder .icon-wrap {
-  width: 64px; height: 64px; margin: 0 auto 0.75rem;
-  background: rgba(88, 166, 255, 0.05); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(88, 166, 255, 0.1);
-  transition: all 0.4s;
+.upload-area:hover { border-color: rgba(88,166,255,0.4); }
+.upload-area.has-image { border-style: solid; border-color: rgba(88,166,255,0.3); }
+.upload-area .placeholder { text-align: center; color: #8b949e; }
+.upload-area .placeholder .icon {
+  width: 48px; height: 48px; margin: 0 auto 0.5rem;
+  opacity: 0.5; filter: invert(0.5);
 }
-.upload-area:hover .placeholder .icon-wrap {
-  background: rgba(88, 166, 255, 0.1); transform: scale(1.1);
-  box-shadow: 0 0 30px rgba(88, 166, 255, 0.1);
-}
-.upload-area .placeholder .icon-wrap svg { width: 28px; height: 28px; opacity: 0.6; }
 .upload-area .placeholder p { font-size: 0.85rem; }
 .upload-area .placeholder small { font-size: 0.75rem; opacity: 0.6; }
-.upload-area .file-info { display: none; z-index: 1; }
-.upload-area.has-image .file-info { display: block; text-align: center; color: #58a6ff; font-size: 0.8rem; }
-
 .upload-area .remove-btn {
-  position: absolute; top: 12px; right: 12px;
-  background: rgba(218, 54, 51, 0.8); color: #fff; border: none; border-radius: 8px;
-  padding: 6px 14px; font-size: 0.75rem; cursor: pointer; display: none; z-index: 2;
-  backdrop-filter: blur(10px); transition: all 0.3s;
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(218,54,51,0.8); color: #fff; border: none;
+  border-radius: 6px; padding: 4px 12px; font-size: 0.7rem;
+  cursor: pointer; display: none; z-index: 2;
 }
-.upload-area .remove-btn:hover { background: rgba(218, 54, 51, 1); transform: scale(1.05); }
 .upload-area.has-image .remove-btn { display: block; }
 .upload-area input[type="file"] { display: none; }
-
-/* How it works section */
-.info-card { margin-top: 1.75rem; }
-.info-card .card { padding: 1.25rem; }
-.info-steps {
-  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
-  margin: 1rem 0;
+.upload-area .file-badge {
+  display: none; margin-top: 0.5rem;
+  background: rgba(88,166,255,0.1); padding: 4px 12px;
+  border-radius: 6px; font-size: 0.75rem; color: #58a6ff;
 }
-.step {
-  display: flex; align-items: center; gap: 0.75rem;
-  background: rgba(13, 17, 23, 0.5); padding: 0.75rem 1rem;
-  border-radius: 10px; border: 1px solid rgba(48, 54, 61, 0.2);
-  font-size: 0.85rem;
-}
-.step .num {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: rgba(88, 166, 255, 0.15); color: #58a6ff;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
-}
-.step .arrow { color: #58a6ff; font-size: 1.2rem; margin: 0 0.25rem; }
+.upload-area.has-image .file-badge { display: block; }
 
-.preview-section { margin-top: 1.75rem; transform: translateZ(25px); }
-.preview-section .card { padding: 1.5rem; }
-
-#previewContainer {
-  position: relative; border-radius: 10px; min-height: 120px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(48, 54, 61, 0.3);
-}
-#previewImg { max-width: 100%; max-height: 400px; border-radius: 8px; display: none; }
-#previewPlaceholder { color: #8b949e; font-size: 0.9rem; padding: 2rem; text-align: center; }
-
-.actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
-
+.actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
 .btn {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.7rem 1.8rem; border: none; border-radius: 10px;
-  font-size: 0.85rem; font-weight: 600; cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative; overflow: hidden; letter-spacing: 0.3px;
+  padding: 0.75rem 2rem; border: none; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  transition: all .4s cubic-bezier(.175,.885,.32,1.275);
+  letter-spacing: 0.3px;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #238636, #2ea043); color: #fff;
-  box-shadow: 0 4px 20px rgba(35, 134, 54, 0.3);
+  background: linear-gradient(135deg,#238636,#2ea043); color: #fff;
+  box-shadow: 0 4px 20px rgba(35,134,54,0.3);
 }
-.btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(35, 134, 54, 0.4); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(35,134,54,0.4); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .btn-secondary {
-  background: rgba(33, 38, 45, 0.8); color: #c9d1d9;
-  border: 1px solid rgba(48, 54, 61, 0.4);
+  background: rgba(33,38,45,0.8); color: #c9d1d9;
+  border: 1px solid rgba(48,54,61,0.4);
 }
-.btn-secondary:hover { background: rgba(48, 54, 61, 0.8); transform: translateY(-2px); }
+.btn-secondary:hover { background: rgba(48,54,61,0.8); transform: translateY(-2px); }
 
 .status {
-  font-size: 0.85rem; margin-top: 0.75rem; padding: 0.5rem 1rem; border-radius: 8px; display: inline-block;
+  font-size: 0.85rem; margin-top: 0.75rem; padding: 0.5rem 1rem;
+  border-radius: 8px; display: inline-block;
 }
-.status.error { color: #f85149; background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.2); }
-.status.success { color: #3fb950; background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.2); }
-.status.info { color: #58a6ff; background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.2); }
+.status.success { color: #3fb950; background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.2); }
+.status.error { color: #f85149; background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.2); }
+.status.info { color: #58a6ff; background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.2); }
 
-.extract-box {
-  margin-top: 1rem;
-  background: rgba(13, 17, 23, 0.5); border: 1px solid rgba(48, 54, 61, 0.3);
-  border-radius: 10px; padding: 1rem;
+.how-box {
+  background: rgba(13,17,23,0.4); border: 1px solid rgba(48,54,61,0.2);
+  border-radius: 10px; padding: 0.75rem 1rem; display: flex;
+  align-items: center; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; color: #8b949e;
 }
-.extract-box h3 { color: #58a6ff; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-.extract-box .cmd {
-  background: rgba(0,0,0,0.4); padding: 0.75rem 1rem; border-radius: 6px;
-  font-family: 'Courier New', monospace; font-size: 0.8rem; color: #98c379;
-  border: 1px solid rgba(48, 54, 61, 0.2); user-select: all;
-}
+.how-box span { display: flex; align-items: center; gap: 0.4rem; }
+.how-box .arrow { color: #58a6ff; font-size: 1.2rem; }
 
-.particles {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none; z-index: 0; overflow: hidden;
+.preview-section { margin-top: 1.5rem; }
+#previewContainer {
+  border-radius: 10px; min-height: 100px; text-align: center;
+  background: rgba(13,17,23,0.6); border: 1px solid rgba(48,54,61,0.3);
+  padding: 1rem;
 }
-.particle {
-  position: absolute; width: 2px; height: 2px;
-  background: rgba(88, 166, 255, 0.3); border-radius: 50%;
-  animation: particleFloat linear infinite;
-}
-@keyframes particleFloat {
-  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-10vh) translateX(100px); opacity: 0; }
-}
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(48, 54, 61, 0.5); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(88, 166, 255, 0.3); }
+#previewImg { max-width: 100%; max-height: 300px; border-radius: 8px; display: none; }
 </style>
 </head>
 <body>
-
-<div class="particles" id="particles"></div>
-
 <div class="container">
   <div class="header">
     <h1>StegoCode</h1>
-    <div class="glow-line"></div>
-    <p class="subtitle">Hide Python code inside a PNG image — invisible to the eye</p>
-    <p class="tagline">Steganography • Polyglot • Zero trace</p>
+    <div class="glow"></div>
+    <p>Embed Python code into a PNG — download as a self-executing <code style="color:#58a6ff">.py</code> file</p>
+    <span class="tag">double-click the .py → runs code + shows image</span>
   </div>
 
-  <!-- How it works -->
-  <div class="info-card">
-    <div class="card">
-      <div class="info-steps">
-        <div class="step"><span class="num">1</span> Paste your Python code</div>
-        <span class="step" style="border:none;background:transparent;padding:0"><span class="arrow">→</span></span>
-        <div class="step"><span class="num">2</span> Upload a carrier PNG image</div>
-        <span class="step" style="border:none;background:transparent;padding:0"><span class="arrow">→</span></span>
-        <div class="step"><span class="num">3</span> Code hidden inside PNG</div>
-        <span class="step" style="border:none;background:transparent;padding:0"><span class="arrow">→</span></span>
-        <div class="step"><span class="num">4</span> Download ZIP (stego PNG + .py)</div>
-      </div>
-    </div>
+  <div class="how-box">
+    <span>📝 Paste code</span>
+    <span class="arrow">→</span>
+    <span>🖼️ Upload PNG</span>
+    <span class="arrow">→</span>
+    <span>📦 Download <code style="color:#e6c07b">runnable.py</code></span>
+    <span class="arrow">→</span>
+    <span>⚡ Double-click → code runs + image opens</span>
   </div>
 
-  <!-- Main Grid -->
   <div class="grid">
     <div class="card">
-      <div class="card-header">
-        <h2>Python Code</h2>
-        <span class="badge">will be hidden</span>
-      </div>
-      <textarea id="codeInput" placeholder="Paste your Python code here..." spellcheck="false">print("Hello, World!")</textarea>
+      <div class="card-header"><h2>Python Code</h2><span class="badge">will be embedded</span></div>
+      <textarea id="codeInput" spellcheck="false">print("Hello from inside the PNG!")
+
+# Your code runs when you double-click the .py file
+</textarea>
     </div>
     <div class="card">
-      <div class="card-header">
-        <h2>Carrier Image</h2>
-        <span class="badge">PNG only</span>
-      </div>
+      <div class="card-header"><h2>Carrier Image</h2><span class="badge">PNG</span></div>
       <div class="upload-area" id="uploadArea">
         <div class="placeholder">
-          <div class="icon-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <path d="m21 15-5-5L5 21"/>
             </svg>
           </div>
-          <p>Click to upload a carrier PNG</p>
-          <small>The code will be hidden inside this image</small>
+          <p>Upload a PNG image</p>
+          <small>The image will appear when the code runs</small>
         </div>
-        <div class="file-info" id="fileInfo">
-          <p id="fileName"></p>
-          <p id="fileSize" style="font-size:0.75rem;opacity:0.6"></p>
-        </div>
+        <div class="file-badge" id="fileBadge"></div>
         <input type="file" id="imageInput" accept="image/png">
-        <button class="remove-btn" id="removeBtn">✕ Remove</button>
+        <button class="remove-btn" id="removeBtn">✕</button>
       </div>
     </div>
   </div>
 
-  <!-- Preview -->
-  <div class="preview-section">
-    <div class="card">
-      <div class="card-header">
-        <h2>Output Preview</h2>
-      </div>
-      <div id="previewContainer">
-        <div id="previewPlaceholder">Upload a carrier image to see preview</div>
-        <img id="previewImg" alt="Stego PNG preview">
-      </div>
-      <div class="actions">
-        <button class="btn btn-primary" id="generateBtn">🔒 Embed Code &amp; Download ZIP</button>
-      </div>
-      <div class="status" id="status"></div>
-
-      <!-- Extract instruction -->
-      <div class="extract-box" id="extractBox" style="display:none">
-        <h3>🔓 Extract the hidden code</h3>
-        <p style="font-size:0.8rem;color:#8b949e;margin-bottom:0.5rem">The code is appended after the PNG's IEND marker. Extract it with:</p>
-        <div class="cmd" id="extractCmd">python extract.py</div>
-        <p style="font-size:0.75rem;color:#8b949e;margin-top:0.5rem">
-          Or use any hex editor — the code starts right after the <code style="color:#e6c07b">IEND</code> chunk.
-        </p>
-      </div>
+  <div class="preview-section card">
+    <div class="card-header"><h2>Preview</h2></div>
+    <div id="previewContainer">
+      <div id="previewPlaceholder" style="color:#8b949e;padding:1rem">Upload an image to preview</div>
+      <img id="previewImg" alt="Preview">
     </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="generateBtn">📦 Generate &amp; Download .py</button>
+    </div>
+    <div class="status" id="status"></div>
   </div>
 </div>
 
 <script>
-const particlesContainer = document.getElementById('particles');
-for (let i = 0; i < 30; i++) {
-  const p = document.createElement('div');
-  p.className = 'particle';
-  p.style.left = Math.random() * 100 + '%';
-  p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
-  p.style.animationDuration = (15 + Math.random() * 25) + 's';
-  p.style.animationDelay = (Math.random() * 10) + 's';
-  p.style.opacity = 0.2 + Math.random() * 0.4;
-  particlesContainer.appendChild(p);
-}
-
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    card.style.transform = `translateZ(30px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
-  });
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = 'translateZ(20px) rotateX(2deg)';
-  });
-});
-
 const codeInput = document.getElementById('codeInput');
 const previewImg = document.getElementById('previewImg');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
 const imageInput = document.getElementById('imageInput');
 const uploadArea = document.getElementById('uploadArea');
 const removeBtn = document.getElementById('removeBtn');
-const fileInfo = document.getElementById('fileInfo');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
+const fileBadge = document.getElementById('fileBadge');
 const generateBtn = document.getElementById('generateBtn');
 const status = document.getElementById('status');
-const extractBox = document.getElementById('extractBox');
 
-let uploadedFileData = null;
-let uploadedFileName = '';
+let uploadedDataUrl = null;
+let uploadedFileSize = 0;
 
-// Image upload
 uploadArea.addEventListener('click', (e) => {
-  if (e.target === removeBtn || e.target.closest('.remove-btn')) return;
+  if (e.target === removeBtn) return;
   imageInput.click();
 });
 
@@ -398,139 +241,113 @@ imageInput.addEventListener('change', () => {
   const file = imageInput.files[0];
   if (!file) return;
   if (file.type !== 'image/png') {
-    status.textContent = 'Only PNG files are supported as carriers.';
+    status.textContent = 'Only PNG files are supported.';
     status.className = 'status error';
     return;
   }
   const reader = new FileReader();
   reader.onload = (e) => {
-    uploadedFileData = e.target.result;
-    uploadedFileName = file.name;
+    uploadedDataUrl = e.target.result;
+    uploadedFileSize = file.size;
     uploadArea.classList.add('has-image');
-    uploadArea.style.backgroundImage = `url(${uploadedFileData})`;
+    uploadArea.style.backgroundImage = `url(${uploadedDataUrl})`;
     uploadArea.querySelector('.placeholder').style.display = 'none';
-    fileName.textContent = `📄 ${file.name}`;
-    fileSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
-    // Show preview
-    previewImg.src = uploadedFileData;
+    fileBadge.textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    previewImg.src = uploadedDataUrl;
     previewImg.style.display = 'block';
     previewPlaceholder.style.display = 'none';
     status.textContent = '';
-    status.className = 'status';
-    extractBox.style.display = 'none';
   };
   reader.readAsDataURL(file);
 });
 
 removeBtn.addEventListener('click', () => {
-  uploadedFileData = null;
-  uploadedFileName = '';
+  uploadedDataUrl = null;
   imageInput.value = '';
   uploadArea.classList.remove('has-image');
   uploadArea.style.backgroundImage = '';
   uploadArea.querySelector('.placeholder').style.display = '';
-  fileInfo.style.display = 'none';
+  fileBadge.textContent = '';
   previewImg.style.display = 'none';
   previewPlaceholder.style.display = 'block';
   status.textContent = '';
-  status.className = 'status';
-  extractBox.style.display = 'none';
 });
 
+function escapePyString(s) {
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
+}
+
 generateBtn.addEventListener('click', async () => {
-  const code = codeInput.value.trim();
-  if (!code) {
+  const code = codeInput.value;
+  if (!code.trim()) {
     status.textContent = 'Please enter some Python code.';
     status.className = 'status error';
     return;
   }
-  if (!uploadedFileData) {
+  if (!uploadedDataUrl) {
     status.textContent = 'Please upload a carrier PNG image.';
     status.className = 'status error';
     return;
   }
 
-  status.textContent = '⏳ Embedding code into PNG...';
+  status.textContent = '⏳ Generating self-executing .py file...';
   status.className = 'status info';
   generateBtn.disabled = true;
 
   try {
-    // Convert base64 data URL to binary
-    const base64 = uploadedFileData.split(',')[1];
-    const binaryStr = atob(base64);
-    const pngBytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      pngBytes[i] = binaryStr.charCodeAt(i);
-    }
+    // Get base64 of the PNG
+    const base64 = uploadedDataUrl.split(',')[1];
 
-    // Convert Python code to bytes
-    const encoder = new TextEncoder();
-    const codeBytes = encoder.encode(code);
+    // Escape the user code for embedding
+    const escapedCode = escapePyString(code);
 
-    // Append after IEND: PNG data + code marker + code length + code content
-    // Marker makes it easy to identify/extract
-    const marker = new TextEncoder().encode('---PYCODE---');
-    const lengthBytes = new Uint8Array(4);
-    new DataView(lengthBytes.buffer).setUint32(0, codeBytes.length);
+    // Build the self-extracting Python script
+    const pyScript = `#!/usr/bin/env python3
+"""
+Polyglot: PNG + Python
+Double-click this file to run the embedded code and view the image.
+"""
+import base64, os, subprocess, sys, tempfile
 
-    // Combine: original PNG + marker + length(4 bytes) + code
-    const stegoBytes = new Uint8Array(pngBytes.length + marker.length + 4 + codeBytes.length);
-    stegoBytes.set(pngBytes, 0);
-    stegoBytes.set(marker, pngBytes.length);
-    stegoBytes.set(lengthBytes, pngBytes.length + marker.length);
-    stegoBytes.set(codeBytes, pngBytes.length + marker.length + 4);
+PNG_B64 = """${base64}"""
 
-    // Create blob
-    const stegoBlob = new Blob([stegoBytes], { type: 'image/png' });
+USER_CODE = """${escapedCode}"""
 
-    // Create ZIP
-    const zip = new JSZip();
-    zip.file('stego.png', stegoBlob);
-    zip.file('code.py', code);
+def main():
+    # Write PNG to temp file
+    png_path = os.path.join(tempfile.gettempdir(), "stego_output.png")
+    with open(png_path, "wb") as f:
+        f.write(base64.b64decode(PNG_B64))
 
-    // Also add an extract script
-    const extractScript = `#!/usr/bin/env python3
-"""Extract hidden Python code from a stego PNG."""
-import sys
+    # Open the image (cross-platform)
+    try:
+        if sys.platform == "win32":
+            os.startfile(png_path)
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", png_path])
+        else:
+            subprocess.Popen(["xdg-open", png_path])
+    except Exception:
+        print(f"[Image saved to {png_path}]")
 
-def extract(png_path):
-    with open(png_path, 'rb') as f:
-        data = f.read()
-    marker = b'---PYCODE---'
-    idx = data.find(marker)
-    if idx == -1:
-        print('No hidden code found in', png_path)
-        return
-    length = int.from_bytes(data[idx+len(marker):idx+len(marker)+4], 'big')
-    code = data[idx+len(marker)+4:idx+len(marker)+4+length]
-    print(code.decode('utf-8'))
+    # Execute the embedded code
+    exec(compile(USER_CODE, "<embedded>", "exec"))
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('Usage: python extract.py <stego.png>')
-    else:
-        extract(sys.argv[1])
+if __name__ == "__main__":
+    main()
 `;
-    zip.file('extract.py', extractScript);
 
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const blob = new Blob([pyScript], { type: 'text/x-python' });
+    saveAs(blob, 'runnable.py');
 
-    // Update preview with stego image
-    const stegoUrl = URL.createObjectURL(stegoBlob);
-    previewImg.src = stegoUrl;
-    previewImg.style.display = 'block';
-
-    // Trigger download
-    saveAs(zipBlob, 'stego-export.zip');
-
-    status.textContent = '✅ Done! Code hidden inside stego.png. ZIP downloaded.';
+    status.textContent = '✅ Done! Downloading runnable.py — double-click it to run code + see image.';
     status.className = 'status success';
-
-    // Show extract instructions
-    document.getElementById('extractCmd').textContent =
-      `python extract.py stego.png`;
-    extractBox.style.display = 'block';
-
+    previewPlaceholder.textContent = '✅ .py file generated! PNG embedded inside.';
   } catch (err) {
     status.textContent = 'Error: ' + err.message;
     status.className = 'status error';
